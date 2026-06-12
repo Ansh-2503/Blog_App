@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js / Builds
+.next/
+out/
+dist/
+build/
+.cache/
+.turbo/
+.vercel/
+
+# Testing
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment Variables
+.env
+.env.*
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# Secrets & Keys (CRITICAL)
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+credentials.json
+service-account.json
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
