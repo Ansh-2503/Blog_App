@@ -1,10 +1,11 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  // Create a transporter using Gmail SMTP or similar (based on .env)
-  // Note: For Gmail, service: 'gmail' or host: 'smtp.gmail.com' is used.
+  // Create a transporter using standard SMTP configuration
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465, // true for 465, false for other ports like 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -21,10 +22,13 @@ const sendEmail = async (options) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully: ${info.messageId}`);
+    console.log(`[SMTP] Success: Email sent successfully to ${options.email} (ID: ${info.messageId})`);
     return true;
   } catch (error) {
-    console.error('Nodemailer error sending email:', error.message);
+    console.error(`[SMTP] Error: Failed to send email to ${options.email}`);
+    console.error(`[SMTP] Actual Error Details:`, error);
+    
+    // Fallback log for development/debugging
     console.log('-----------------------------------------');
     console.log(`FALLBACK EMAIL LOG (To: ${options.email})`);
     console.log(`Subject: ${options.subject}`);
