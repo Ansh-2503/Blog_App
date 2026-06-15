@@ -72,8 +72,10 @@ exports.registerUser = async ({ name, email, password, role }) => {
     </div>
   `;
 
-  sendEmail({ email: user.email, subject: "DevPulse Account Verification", message, html })
-    .catch(err => console.error("Background Email Error:", err.message));
+  const emailSent = await sendEmail({ email: user.email, subject: "DevPulse Account Verification", message, html });
+  if (!emailSent) {
+    throw Object.assign(new Error("Failed to send verification email. Please check the server logs or try again later."), { statusCode: 500 });
+  }
 
   return { email: user.email };
 };
@@ -179,8 +181,10 @@ exports.forgotPassword = async ({ email }) => {
   const message = `You requested a password reset on DevPulse. Please reset your password by clicking this link:\n\n${resetUrl}`;
   const html = `<div style="padding: 20px;"><h2>DevPulse Password Reset</h2><a href="${resetUrl}">Reset Password</a></div>`;
 
-  sendEmail({ email: user.email, subject: "DevPulse Password Reset", message, html })
-    .catch(err => console.error("Background Email Error:", err.message));
+  const emailSent = await sendEmail({ email: user.email, subject: "DevPulse Password Reset", message, html });
+  if (!emailSent) {
+    throw Object.assign(new Error("Failed to send password reset email. Please try again later."), { statusCode: 500 });
+  }
   return true;
 };
 

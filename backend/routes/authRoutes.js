@@ -14,6 +14,7 @@ const {
   changePassword,
   uploadProfileImage,
   deleteProfileImage,
+  testEmail,
 } = require('../controllers/authController');
 const { protect } = require('../middlewares/auth');
 const { validate, schemas } = require('../middlewares/validation');
@@ -38,6 +39,7 @@ router.post('/login', authLimiter, validate(schemas.login), login);
 router.get('/google/callback', googleCallback); // Standard OAuth callback route
 router.post('/forgot-password', authLimiter, validate(schemas.forgotPassword), forgotPassword);
 router.post('/reset-password', authLimiter, validate(schemas.resetPassword), resetPassword);
+router.post('/test-email', testEmail);
 router.post('/refresh-token', refreshToken);
 router.post('/logout', protect, logout);
 router.post('/logout-all', protect, logoutAll);
