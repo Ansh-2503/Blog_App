@@ -1,6 +1,9 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
+  console.log(`[SMTP Debug] Starting email send to: ${options.email}`);
+  console.log(`[SMTP Debug] ENV Check: HOST=${process.env.SMTP_HOST}, PORT=${process.env.SMTP_PORT}, USER=${process.env.EMAIL_USER ? 'SET' : 'NOT_SET'}, PASS=${process.env.EMAIL_PASS ? 'SET' : 'NOT_SET'}`);
+
   // Create a transporter using standard SMTP configuration
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -10,6 +13,9 @@ const sendEmail = async (options) => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    // Adding extra debug/logger config to transporter for detailed output
+    debug: true,
+    logger: true
   });
 
   const mailOptions = {
@@ -25,6 +31,7 @@ const sendEmail = async (options) => {
     console.log(`[SMTP] Success: Email sent successfully to ${options.email} (ID: ${info.messageId})`);
     return true;
   } catch (error) {
+    console.error(`[SMTP Debug] Error caught in sendEmail try-catch!`);
     console.error(`[SMTP] Error: Failed to send email to ${options.email}`);
     console.error(`[SMTP] Actual Error Details:`, error);
     

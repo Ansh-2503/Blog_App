@@ -232,26 +232,3 @@ exports.deleteProfileImage = async (req, res, next) => {
     next(error);
   }
 };
-
-exports.testEmail = async (req, res, next) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: "Please provide an email address to test" });
-
-    const sendEmail = require("../utils/sendEmail");
-    const emailSent = await sendEmail({
-      email,
-      subject: "DevPulse Test Email",
-      message: "This is a test email to verify SMTP configuration.",
-      html: "<p>This is a test email to verify SMTP configuration.</p>"
-    });
-
-    if (emailSent) {
-      res.status(200).json({ success: true, message: "Test email sent successfully!" });
-    } else {
-      res.status(500).json({ success: false, message: "Failed to send test email. Check server logs." });
-    }
-  } catch (error) {
-    next(error);
-  }
-};
