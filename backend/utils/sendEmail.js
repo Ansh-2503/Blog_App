@@ -1,20 +1,16 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-  const smtpConfig = {
+  // Create a transporter using standard SMTP configuration
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465,
+    secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465, // true for 465, false for other ports like 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-  };
-
-  // Log configuration (excluding password) to verify ENV variables in production
-  console.log(`[SMTP] Initializing transporter with Config: Host=${smtpConfig.host}, Port=${smtpConfig.port}, Secure=${smtpConfig.secure}, User=${smtpConfig.auth.user ? 'SET' : 'MISSING'}, Pass=${smtpConfig.auth.pass ? 'SET' : 'MISSING'}`);
-
-  const transporter = nodemailer.createTransport(smtpConfig);
+  });
 
   const mailOptions = {
     from: `"DevPulse Blog" <${process.env.EMAIL_USER}>`,
@@ -30,9 +26,7 @@ const sendEmail = async (options) => {
     return true;
   } catch (error) {
     console.error(`[SMTP] Error: Failed to send email to ${options.email}`);
-    console.error(`[SMTP] Error Name: ${error.name}`);
-    console.error(`[SMTP] Error Message: ${error.message}`);
-    console.error(`[SMTP] Full Error Stack:`, error.stack);
+    console.error(`[SMTP] Actual Error Details:`, error);
     
     // Fallback log for development/debugging
     console.log('-----------------------------------------');
