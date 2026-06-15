@@ -5,14 +5,14 @@ const sendTokenResponse = (res, statusCode, { user, token, refreshToken }) => {
     expires: new Date(Date.now() + 15 * 60 * 1000), // 15 mins
     httpOnly: false,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   };
 
   const refreshCookieOptions = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   };
 
   res
@@ -81,8 +81,8 @@ exports.googleCallback = async (req, res) => {
 
     const { user, token, refreshToken, isNewUser } = await authService.processGoogleCallback({ code, state });
     
-    res.cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: "lax" });
-    res.cookie("refreshToken", refreshToken, { expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" });
+    res.cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
+    res.cookie("refreshToken", refreshToken, { expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
 
     if (isNewUser) {
       res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/complete-profile`);
@@ -141,7 +141,7 @@ exports.refreshToken = async (req, res, next) => {
     if (!refreshToken) return res.status(401).json({ success: false, message: "No refresh token provided" });
 
     const { token } = await authService.refreshAccessToken({ refreshToken });
-    res.status(200).cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: "lax" }).json({ success: true, token });
+    res.status(200).cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" }).json({ success: true, token });
   } catch (error) {
     console.error("Refresh token error:", error.message);
     res.status(401).json({ success: false, message: "Invalid or expired refresh token" });

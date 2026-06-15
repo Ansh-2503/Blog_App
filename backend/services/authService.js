@@ -72,7 +72,8 @@ exports.registerUser = async ({ name, email, password, role }) => {
     </div>
   `;
 
-  await sendEmail({ email: user.email, subject: "DevPulse Account Verification", message, html });
+  sendEmail({ email: user.email, subject: "DevPulse Account Verification", message, html })
+    .catch(err => console.error("Background Email Error:", err.message));
 
   return { email: user.email };
 };
@@ -178,7 +179,8 @@ exports.forgotPassword = async ({ email }) => {
   const message = `You requested a password reset on DevPulse. Please reset your password by clicking this link:\n\n${resetUrl}`;
   const html = `<div style="padding: 20px;"><h2>DevPulse Password Reset</h2><a href="${resetUrl}">Reset Password</a></div>`;
 
-  await sendEmail({ email: user.email, subject: "DevPulse Password Reset", message, html });
+  sendEmail({ email: user.email, subject: "DevPulse Password Reset", message, html })
+    .catch(err => console.error("Background Email Error:", err.message));
   return true;
 };
 
