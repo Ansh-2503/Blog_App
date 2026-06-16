@@ -66,7 +66,7 @@ exports.registerUser = async ({ name, email, password, role }) => {
   try {
     await sendOtpEmail(user.email, otp);
   } catch (error) {
-    throw Object.assign(new Error("Failed to send verification email. Please try again later."), { statusCode: 500 });
+    throw Object.assign(new Error(error.message || "Failed to send verification email. Please try again later."), { statusCode: 500 });
   }
 
   return { email: user.email };
@@ -128,7 +128,7 @@ exports.resendOtp = async ({ email }) => {
   try {
     await sendOtpEmail(user.email, otp);
   } catch (error) {
-    throw Object.assign(new Error("Failed to resend verification email. Please try again later."), { statusCode: 500 });
+    throw Object.assign(new Error(error.message || "Failed to resend verification email. Please try again later."), { statusCode: 500 });
   }
 
   return true;
@@ -213,7 +213,7 @@ exports.forgotPassword = async ({ email }) => {
   try {
     await sendResetEmail(user.email, resetUrl);
   } catch (error) {
-    throw Object.assign(new Error("Failed to send reset email. Please try again later."), { statusCode: 500 });
+    throw Object.assign(new Error(error.message || "Failed to send reset email. Please try again later."), { statusCode: 500 });
   }
   return true;
 };
