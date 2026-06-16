@@ -10,13 +10,12 @@ import {
   Download,
   Eye,
 } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import dynamic from 'next/dynamic';
 
 import { ArticleBody } from '@/components/blog/article-body';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CoverImage } from '@/components/shared/cover-image';
-import { ArticlePdfDocument } from '@/components/elements/article-pdf-document';
 import { getRelatedArticles } from '@/lib/articles';
 import { ROUTES } from '@/lib/constants';
 import { formatFollowers, formatLongDate, formatShortDate, formatViews } from '@/lib/format';
@@ -28,6 +27,22 @@ import { useAuthStore } from '@/context/auth-store';
 interface BlogDetailViewProps {
   article: Article;
 }
+
+const PdfDownloadButton = dynamic(
+  () => import('@/components/blog/pdf-download-button'),
+  { 
+    ssr: false,
+    loading: () => (
+      <button
+        type="button"
+        disabled
+        className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
+      >
+        <Download className="h-4 w-4" /> Loading PDF...
+      </button>
+    )
+  }
+);
 
 export function BlogDetailView({ article }: BlogDetailViewProps) {
   const relatedArticles = getRelatedArticles(article);
@@ -145,28 +160,7 @@ export function BlogDetailView({ article }: BlogDetailViewProps) {
               </div>
 
               <div className="mt-4 flex items-center gap-2">
-                {isClient ? (
-                  <PDFDownloadLink
-                    document={<ArticlePdfDocument article={article} />}
-                    fileName={`${article.slug}.pdf`}
-                    className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent"
-                  >
-                    {({ loading }) => (
-                      <span className="flex items-center gap-1.5">
-                        <Download className="h-4 w-4" />
-                        {loading ? 'Generating PDF...' : 'Download PDF'}
-                      </span>
-                    )}
-                  </PDFDownloadLink>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="ml-auto flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
-                  >
-                    <Download className="h-4 w-4" /> Download PDF
-                  </button>
-                )}
+                <PdfDownloadButton article={article} />
               </div>
             </div>
 
