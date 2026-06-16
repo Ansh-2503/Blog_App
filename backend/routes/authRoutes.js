@@ -2,6 +2,7 @@ const express = require('express');
 const {
   register,
   verifyOtp,
+  resendOtp,
   login,
   googleCallback,
   forgotPassword,
@@ -34,6 +35,7 @@ const authLimiter = rateLimit({
 
 router.post('/register', authLimiter, validate(schemas.register), register);
 router.post('/verify-otp', authLimiter, validate(schemas.verifyOtp), verifyOtp);
+router.post('/resend-otp', authLimiter, resendOtp);
 router.post('/login', authLimiter, validate(schemas.login), login);
 router.get('/google/callback', googleCallback); // Standard OAuth callback route
 router.post('/forgot-password', authLimiter, validate(schemas.forgotPassword), forgotPassword);

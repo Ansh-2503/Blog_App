@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
-const sendEmail = require("../utils/sendEmail");
+const { sendOtpEmail, sendResetEmail } = require("../utils/sendEmail");
 const { cloudinary } = require("../utils/cloudinary");
 
 const googleClient = new OAuth2Client(
@@ -53,28 +53,20 @@ exports.registerUser = async ({ name, email, password, role }) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 10);
+  
   await OTP.deleteMany({ email });
   await OTP.create({
     email,
-    code: otp,
+    code: hashedOtp,
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
-  const message = `Welcome to DevPulse! Your verification code is ${otp}. This code is valid for 5 minutes.`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; border: 1px solid #ddd; border-radius: 8px;">
-      <h2 style="color: #2563eb;">Welcome to DevPulse!</h2>
-      <p>Thank you for signing up. Please verify your email using the verification code below:</p>
-      <div style="font-size: 32px; font-weight: bold; color: #1e3a8a; padding: 15px; background-color: #f3f4f6; text-align: center; border-radius: 6px; letter-spacing: 4px; margin: 20px 0;">
-        ${otp}
-      </div>
-      <p style="font-size: 13px; color: #666;">This code will expire in 5 minutes.</p>
-    </div>
-  `;
-
-  const emailSent = await sendEmail({ email: user.email, subject: "DevPulse Account Verification", message, html });
-  if (!emailSent) {
-    throw Object.assign(new Error("Failed to send verification email. Please check the server logs or try again later."), { statusCode: 500 });
+  // Blocking email send
+  try {
+    await sendOtpEmail(user.email, otp);
+  } catch (error) {
+    throw Object.assign(new Error("Failed to send verification email. Please try again later."), { statusCode: 500 });
   }
 
   return { email: user.email };
@@ -88,7 +80,10 @@ exports.verifyOtp = async ({ email, otp }) => {
 
   const otpRecord = await OTP.findOne({ email }).sort({ createdAt: -1 });
   if (!otpRecord) throw Object.assign(new Error("Verification code not found or expired. Please request a new one."), { statusCode: 400 });
-  if (otpRecord.code !== otp) throw Object.assign(new Error("Invalid verification code"), { statusCode: 400 });
+  
+  const isMatch = await bcrypt.compare(otp.toString(), otpRecord.code);
+  if (!isMatch) throw Object.assign(new Error("Invalid verification code"), { statusCode: 400 });
+  
   if (otpRecord.expiresAt < new Date()) throw Object.assign(new Error("Verification code has expired. Please register again."), { statusCode: 400 });
 
   user.isVerified = true;
@@ -101,6 +96,42 @@ exports.verifyOtp = async ({ email, otp }) => {
   await user.save();
 
   return { user, token, refreshToken };
+};
+
+exports.resendOtp = async ({ email }) => {
+  const user = await User.findOne({ email });
+
+  if (!user) throw Object.assign(new Error("User not found"), { statusCode: 400 });
+  if (user.isVerified) throw Object.assign(new Error("Account already verified. Please login."), { statusCode: 400 });
+
+  const latestOtp = await OTP.findOne({ email }).sort({ createdAt: -1 });
+  if (latestOtp) {
+    const timeSinceLastOtp = Date.now() - latestOtp.createdAt.getTime();
+    if (timeSinceLastOtp < 60 * 1000) {
+      throw Object.assign(new Error(`Please wait ${Math.ceil((60000 - timeSinceLastOtp) / 1000)} seconds before requesting a new code.`), { statusCode: 429 });
+    }
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = await bcrypt.hash(otp, 10);
+
+  await OTP.deleteMany({ email });
+  await OTP.create({
+    email,
+    code: hashedOtp,
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
+
+  console.log(`[OTP] Generated new OTP for ${email}`);
+
+  // Blocking email send
+  try {
+    await sendOtpEmail(user.email, otp);
+  } catch (error) {
+    throw Object.assign(new Error("Failed to resend verification email. Please try again later."), { statusCode: 500 });
+  }
+
+  return true;
 };
 
 exports.loginUser = async ({ email, password }) => {
@@ -178,12 +209,11 @@ exports.forgotPassword = async ({ email }) => {
   await user.save();
 
   const resetUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
-  const message = `You requested a password reset on DevPulse. Please reset your password by clicking this link:\n\n${resetUrl}`;
-  const html = `<div style="padding: 20px;"><h2>DevPulse Password Reset</h2><a href="${resetUrl}">Reset Password</a></div>`;
-
-  const emailSent = await sendEmail({ email: user.email, subject: "DevPulse Password Reset", message, html });
-  if (!emailSent) {
-    throw Object.assign(new Error("Failed to send password reset email. Please try again later."), { statusCode: 500 });
+  // Blocking email send
+  try {
+    await sendResetEmail(user.email, resetUrl);
+  } catch (error) {
+    throw Object.assign(new Error("Failed to send reset email. Please try again later."), { statusCode: 500 });
   }
   return true;
 };

@@ -60,6 +60,18 @@ exports.verifyOtp = async (req, res, next) => {
   }
 };
 
+exports.resendOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Please provide an email address" });
+
+    await authService.resendOtp({ email });
+    res.status(200).json({ success: true, message: "A new verification code has been sent to your email." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
