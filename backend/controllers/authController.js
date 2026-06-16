@@ -42,12 +42,11 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Please provide name, email, and password" });
     }
     const result = await authService.registerUser({ name, email, password, role });
-    const responsePayload = { success: true, message: "Verification OTP sent to email", email: result.email };
     if (result.otp) {
-      responsePayload.message = "OTP generated successfully (Demo Mode)";
-      responsePayload.otp = result.otp;
+      res.status(200).json({ success: true, message: "OTP generated (demo mode - production fallback)", email: result.email, otp: result.otp });
+    } else {
+      res.status(200).json({ success: true, message: "Verification OTP sent to email", email: result.email });
     }
-    res.status(200).json(responsePayload);
   } catch (error) {
     next(error);
   }
@@ -71,12 +70,11 @@ exports.resendOtp = async (req, res, next) => {
     if (!email) return res.status(400).json({ success: false, message: "Please provide an email address" });
 
     const result = await authService.resendOtp({ email });
-    const responsePayload = { success: true, message: "A new verification code has been sent to your email." };
     if (result && result.otp) {
-      responsePayload.message = "OTP generated successfully (Demo Mode)";
-      responsePayload.otp = result.otp;
+      res.status(200).json({ success: true, message: "OTP generated (demo mode - production fallback)", otp: result.otp });
+    } else {
+      res.status(200).json({ success: true, message: "A new verification code has been sent to your email." });
     }
-    res.status(200).json(responsePayload);
   } catch (error) {
     next(error);
   }

@@ -62,13 +62,14 @@ exports.registerUser = async ({ name, email, password, role }) => {
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
-  // Handle DEMO_MODE
-  if (process.env.DEMO_MODE === "true") {
-    console.log(`[DEMO_MODE] OTP for ${email}: ${otp}`);
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Generated OTP:", otp);
+
+  if (process.env.NODE_ENV === "production") {
     return { email: user.email, otp };
   }
 
-  // Blocking email send
+  // Blocking email send (Development only)
   try {
     await sendOtpEmail(user.email, otp);
   } catch (error) {
@@ -128,15 +129,14 @@ exports.resendOtp = async ({ email }) => {
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
   });
 
-  console.log(`[OTP] Generated new OTP for ${email}`);
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log(`[OTP] Generated new OTP for ${email}:`, otp);
 
-  // Handle DEMO_MODE
-  if (process.env.DEMO_MODE === "true") {
-    console.log(`[DEMO_MODE] OTP for ${email}: ${otp}`);
+  if (process.env.NODE_ENV === "production") {
     return { otp };
   }
 
-  // Blocking email send
+  // Blocking email send (Development only)
   try {
     await sendOtpEmail(user.email, otp);
   } catch (error) {
