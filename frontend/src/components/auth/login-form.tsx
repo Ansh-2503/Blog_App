@@ -39,12 +39,9 @@ export function LoginForm() {
       
       toast.success('Signed in successfully!');
       
-      // Redirect to home page (or the callback URL)
-      if (callbackUrl === window.location.pathname) {
-        window.location.href = callbackUrl;
-      } else {
-        router.push(callbackUrl);
-      }
+      // Redirect to home page (or the callback URL) using a hard navigation
+      // This ensures cookies are sent correctly to the Next.js middleware
+      window.location.href = callbackUrl;
     } catch (err: any) {
       toast.error(err.message || 'Invalid email or password');
     } finally {

@@ -91,11 +91,11 @@ export function RegisterForm() {
       
       toast.success('Email verified! Welcome to DevPulse.');
       
-      // Redirect based on role chosen
+      // Redirect based on role chosen using hard navigation
       if (data.user.role === 'CREATOR') {
-        router.push(ROUTES.articles);
+        window.location.href = ROUTES.articles;
       } else {
-        router.push(ROUTES.home);
+        window.location.href = ROUTES.home;
       }
     } catch (err: any) {
       toast.error(err.message || 'Verification failed');
