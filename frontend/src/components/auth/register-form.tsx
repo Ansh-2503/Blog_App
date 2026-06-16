@@ -33,6 +33,7 @@ export function RegisterForm() {
   // OTP Verification States
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -48,12 +49,19 @@ export function RegisterForm() {
     
     setLoading(true);
     try {
-      await apiFetch('/auth/register', {
+      const data = await apiFetch('/auth/register', {
         method: 'POST',
         body: JSON.stringify(form),
       });
       
-      toast.success('Verification code sent to your email!');
+      if (data.otp) {
+        setOtp(data.otp);
+        setIsDemoMode(true);
+        toast.success(`Demo Mode: OTP is ${data.otp}`);
+      } else {
+        toast.success('Verification code sent to your email!');
+      }
+      
       setStep(2); // Advance to OTP entry step
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
@@ -113,11 +121,19 @@ export function RegisterForm() {
     if (cooldown > 0) return;
     setResending(true);
     try {
-      await apiFetch('/auth/register', {
+      const data = await apiFetch('/auth/register', {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      toast.success('A new verification code has been sent!');
+      
+      if (data.otp) {
+        setOtp(data.otp);
+        setIsDemoMode(true);
+        toast.success(`Demo Mode: OTP is ${data.otp}`);
+      } else {
+        toast.success('A new verification code has been sent!');
+      }
+      
       setCooldown(60); // Start 60s cooldown on success
     } catch (err: any) {
       // If the backend returns a 429 error, it will say "Please wait X seconds..."
@@ -156,6 +172,17 @@ export function RegisterForm() {
             <strong className="text-foreground">{form.email}</strong>
           </p>
         </div>
+
+        {isDemoMode && (
+          <div className="mb-6 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <p className="font-medium text-center">
+              ⚠ Demo Mode Active
+            </p>
+            <p className="text-center mt-1 text-xs">
+              OTP has been auto-filled. In production, this would be sent to your email.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
           <div>
