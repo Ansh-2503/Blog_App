@@ -101,16 +101,31 @@ exports.googleCallback = async (req, res) => {
 
     const { user, token, refreshToken, isNewUser } = await authService.processGoogleCallback({ code, state });
     
-    res.cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
-    res.cookie("refreshToken", refreshToken, { expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" });
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    
+    // Set cookies on backend domain (required for refresh token to work later)
+    res.cookie("token", token, { 
+      expires: new Date(Date.now() + 15 * 60 * 1000), 
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" 
+    });
 
+    res.cookie("refreshToken", refreshToken, { 
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production", 
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" 
+    });
+
+    // Cross-domain OAuth requires passing the token to the frontend so it can set cookies on its own domain
     if (isNewUser) {
-      res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/complete-profile`);
+      res.redirect(`${clientUrl}/auth/callback?token=${token}&isNewUser=true`);
     } else {
-      res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/feed`);
+      res.redirect(`${clientUrl}/auth/callback?token=${token}`);
     }
   } catch (error) {
-    console.error(error);
+    console.error("Google Callback Error:", error);
     res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/?error=GoogleAuthFailed`);
   }
 };
