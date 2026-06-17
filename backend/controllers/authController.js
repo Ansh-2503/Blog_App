@@ -1,18 +1,21 @@
 const authService = require("../services/authService");
 
-const sendTokenResponse = (res, statusCode, { user, token, refreshToken }) => {
+const sendTokenResponse = (req, res, statusCode, { user, token, refreshToken }) => {
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === "production";
+  const sameSiteOption = isSecure ? "none" : "lax";
+
   const cookieOptions = {
     expires: new Date(Date.now() + 15 * 60 * 1000), // 15 mins
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isSecure,
+    sameSite: sameSiteOption,
   };
 
   const refreshCookieOptions = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isSecure,
+    sameSite: sameSiteOption,
   };
 
   res
@@ -58,7 +61,7 @@ exports.verifyOtp = async (req, res, next) => {
     if (!email || !otp) return res.status(400).json({ success: false, message: "Please provide email and verification code" });
     
     const data = await authService.verifyOtp({ email, otp });
-    sendTokenResponse(res, 200, data);
+    sendTokenResponse(req, res, 200, data);
   } catch (error) {
     next(error);
   }
@@ -86,7 +89,7 @@ exports.login = async (req, res, next) => {
     if (!email || !password) return res.status(400).json({ success: false, message: "Please provide email and password" });
 
     const data = await authService.loginUser({ email, password });
-    sendTokenResponse(res, 200, data);
+    sendTokenResponse(req, res, 200, data);
   } catch (error) {
     next(error);
   }
@@ -95,39 +98,58 @@ exports.login = async (req, res, next) => {
 exports.googleCallback = async (req, res) => {
   try {
     const { code, state } = req.query;
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+
+    console.log("[Google OAuth Callback] Starting Google callback handling");
+    console.log(`[Google OAuth Callback] Request Query parameters: code=${code ? 'PRESENT' : 'MISSING'}, state=${state || 'none'}`);
+
     if (!code) {
-      return res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/?error=NoCodeProvided`);
+      console.warn("[Google OAuth Callback] No code provided by Google redirect.");
+      return res.redirect(`${clientUrl}/?error=NoCodeProvided`);
     }
 
-    const { user, token, refreshToken, isNewUser } = await authService.processGoogleCallback({ code, state });
+    // Determine the redirect URI dynamically to match the client callback path
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const redirect_uri = `${protocol}://${host}${req.baseUrl}${req.path}`;
+    console.log(`[Google OAuth Callback] Dynamically computed redirect_uri: ${redirect_uri}`);
+
+    console.log("[Google OAuth Callback] Initiating token exchange and user verification");
+    const { user, token, refreshToken, isNewUser } = await authService.processGoogleCallback({ code, state, redirect_uri });
     
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    console.log(`[Google OAuth Callback] Success: Authenticated user ${user.email} (New: ${isNewUser})`);
     
     // Set cookies on backend domain (required for refresh token to work later)
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === "production";
+    const sameSiteOption = isSecure ? "none" : "lax";
+    console.log(`[Google OAuth Callback] Setting backend cookies -> Secure: ${isSecure}, SameSite: ${sameSiteOption}`);
+
     res.cookie("token", token, { 
       expires: new Date(Date.now() + 15 * 60 * 1000), 
       httpOnly: false, 
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" 
+      secure: isSecure, 
+      sameSite: sameSiteOption 
     });
 
     res.cookie("refreshToken", refreshToken, { 
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === "production", 
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" 
+      secure: isSecure, 
+      sameSite: sameSiteOption 
     });
 
     // Cross-domain OAuth requires passing the token to the frontend so it can set cookies on its own domain
-    if (isNewUser) {
-      res.redirect(`${clientUrl}/auth/callback?token=${token}&isNewUser=true`);
-    } else {
-      res.redirect(`${clientUrl}/auth/callback?token=${token}`);
-    }
+    const redirectUrl = isNewUser 
+      ? `${clientUrl}/auth/callback?token=${token}&isNewUser=true`
+      : `${clientUrl}/auth/callback?token=${token}`;
+
+    console.log(`[Google OAuth Callback] Redirecting client to: ${redirectUrl.replace(/token=[^&]+/, 'token=REDACTED')}`);
+    res.redirect(redirectUrl);
   } catch (error) {
-    console.error("Google Callback Error:", error);
+    console.error("[Google OAuth Callback] CRITICAL ERROR occurred:", error);
     const errorMessage = encodeURIComponent(error.message || 'Unknown Error');
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/?error=GoogleAuthFailed&details=${errorMessage}`);
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    res.redirect(`${clientUrl}/?error=GoogleAuthFailed&details=${errorMessage}`);
   }
 };
 
@@ -177,7 +199,15 @@ exports.refreshToken = async (req, res, next) => {
     if (!refreshToken) return res.status(401).json({ success: false, message: "No refresh token provided" });
 
     const { token } = await authService.refreshAccessToken({ refreshToken });
-    res.status(200).cookie("token", token, { expires: new Date(Date.now() + 15 * 60 * 1000), httpOnly: false, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax" }).json({ success: true, token });
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === "production";
+    const sameSiteOption = isSecure ? "none" : "lax";
+
+    res.status(200).cookie("token", token, { 
+      expires: new Date(Date.now() + 15 * 60 * 1000), 
+      httpOnly: false, 
+      secure: isSecure, 
+      sameSite: sameSiteOption 
+    }).json({ success: true, token });
   } catch (error) {
     console.error("Refresh token error:", error.message);
     res.status(401).json({ success: false, message: "Invalid or expired refresh token" });

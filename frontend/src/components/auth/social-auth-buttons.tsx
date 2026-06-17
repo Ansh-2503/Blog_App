@@ -25,12 +25,17 @@ export function SocialAuthButtons({ isRegister }: SocialAuthButtonsProps) {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const error = urlParams.get('error');
+      const details = urlParams.get('details');
 
       if (error === 'GoogleAuthFailed') {
-        toast.error(`Google Authentication Failed: ${error}`);
+        const errorMsg = details ? decodeURIComponent(details) : error;
+        toast.error(`Google Authentication Failed: ${errorMsg}`);
+        console.error(`[Google Auth] Authentication failed in production:`, errorMsg);
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (error) {
-        toast.error(`Authentication Error: ${error}`);
+        const errorMsg = details ? decodeURIComponent(details) : error;
+        toast.error(`Authentication Error: ${errorMsg}`);
+        console.error(`[Google Auth] Authentication error:`, errorMsg);
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (token) {
         // Clear token from URL to avoid leaking it
@@ -78,6 +83,7 @@ export function SocialAuthButtons({ isRegister }: SocialAuthButtonsProps) {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) {
       toast.error('Google Client ID is not configured');
+      console.error('[Google Auth] Google Client ID is not configured on the frontend.');
       return;
     }
     const redirectUri = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api'}/auth/google/callback`;
@@ -87,7 +93,13 @@ export function SocialAuthButtons({ isRegister }: SocialAuthButtonsProps) {
       stateParam = btoa(JSON.stringify(stateData));
     }
     
-    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20email%20profile&state=${stateParam}`;
+    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&state=${stateParam}`;
+    
+    console.log('[Google Auth] Redirecting user to Google OAuth endpoint');
+    console.log(`[Google Auth] Client ID: ${clientId}`);
+    console.log(`[Google Auth] Redirect URI: ${redirectUri}`);
+    console.log(`[Google Auth] Target URL: ${googleUrl}`);
+    
     window.location.href = googleUrl;
   };
 

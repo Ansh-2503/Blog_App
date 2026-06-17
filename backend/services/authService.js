@@ -163,51 +163,109 @@ exports.loginUser = async ({ email, password }) => {
   return { user, token, refreshToken };
 };
 
-exports.processGoogleCallback = async ({ code, state }) => {
+exports.processGoogleCallback = async ({ code, state, redirect_uri }) => {
+  console.log("[Google OAuth Service] Starting processGoogleCallback");
+  
   let parsedState = {};
   if (state && state !== 'google') {
     try {
+      console.log(`[Google OAuth Service] Decoding state: ${state}`);
       parsedState = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
-    } catch (e) {}
+      console.log("[Google OAuth Service] Decoded state data:", parsedState);
+    } catch (e) {
+      console.warn("[Google OAuth Service] Failed to parse state payload:", e.message);
+    }
   }
 
-  const baseUrl = (process.env.BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
-  const redirect_uri = `${baseUrl}/api/auth/google/callback`;
-  const { tokens } = await googleClient.getToken({ code, redirect_uri });
+  // Use the passed redirect_uri or construct a fallback using BACKEND_URL
+  const finalRedirectUri = redirect_uri || `${(process.env.BACKEND_URL || "http://localhost:5000").replace(/\/$/, "")}/api/auth/google/callback`;
+  
+  console.log(`[Google OAuth Service] Executing token exchange with redirect_uri: ${finalRedirectUri}`);
+  console.log(`[Google OAuth Service] Client configuration -> ID: ${process.env.GOOGLE_CLIENT_ID ? 'Configured' : 'MISSING'}, Secret: ${process.env.GOOGLE_CLIENT_SECRET ? 'Configured' : 'MISSING'}`);
 
-  const ticket = await googleClient.verifyIdToken({
-    idToken: tokens.id_token,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+  let tokens;
+  try {
+    const exchangeResult = await googleClient.getToken({ code, redirect_uri: finalRedirectUri });
+    tokens = exchangeResult.tokens;
+    console.log("[Google OAuth Service] Token exchange successful. ID token acquired:", tokens.id_token ? "YES" : "NO");
+  } catch (error) {
+    console.error("[Google OAuth Service] Token exchange failed. Details:", error);
+    throw new Error(`Google token exchange failed: ${error.message || error}`);
+  }
 
-  const { email, name, picture } = ticket.getPayload();
+  if (!tokens.id_token) {
+    console.error("[Google OAuth Service] No ID Token returned from Google.");
+    throw new Error("No ID Token returned by Google during OAuth exchange.");
+  }
+
+  console.log("[Google OAuth Service] Verifying Google ID token signature and audience");
+  let ticket;
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    console.log("[Google OAuth Service] ID token successfully verified");
+  } catch (error) {
+    console.error("[Google OAuth Service] ID token verification failed:", error);
+    throw new Error(`Google ID token verification failed: ${error.message || error}`);
+  }
+
+  const payload = ticket.getPayload();
+  const { email, name, picture } = payload;
+  console.log(`[Google OAuth Service] Verified user payload: email=${email}, name=${name}, picture=${picture ? 'YES' : 'NO'}`);
+
+  if (!email) {
+    console.error("[Google OAuth Service] OAuth payload missing email address.");
+    throw new Error("Google account profile lacks an email address.");
+  }
+
   let user = await User.findOne({ email });
   let isNewUser = false;
 
   if (!user) {
     isNewUser = true;
+    console.log(`[Google OAuth Service] User ${email} not found. Creating a new user record.`);
+    
+    // Choose custom name and role from state if provided, otherwise default to Google profile details
+    const chosenName = parsedState.name || name || email.split('@')[0];
+    const chosenRole = parsedState.role || "VISITOR";
+
     user = new User({
-      name: parsedState.name || name,
+      name: chosenName,
       email,
       isVerified: true,
-      role: parsedState.role || "VISITOR",
+      role: chosenRole,
       provider: "google",
       avatar: picture || null,
       googleAvatar: picture || null,
     });
+    
     await user.save();
+    console.log(`[Google OAuth Service] New user successfully created: id=${user._id}, name=${user.name}, role=${user.role}`);
   } else {
-    if (!user.isVerified) user.isVerified = true;
+    console.log(`[Google OAuth Service] User ${email} exists (id=${user._id}). Updating provider to google and profile details.`);
+    
+    if (!user.isVerified) {
+      user.isVerified = true;
+      console.log(`[Google OAuth Service] Mark existing user ${email} as verified.`);
+    }
+    
     user.provider = "google";
     if (picture) user.googleAvatar = picture;
     if (picture && !user.avatar) user.avatar = picture;
+    
     await user.save();
+    console.log(`[Google OAuth Service] Existing user record updated successfully`);
   }
 
+  console.log("[Google OAuth Service] Generating JWT access and refresh tokens");
   const token = signAccessToken(user._id, user.role);
   const refreshToken = signRefreshToken(user._id);
+  
   user.refreshTokens.push(refreshToken);
   await user.save();
+  console.log("[Google OAuth Service] JWT signed and refresh tokens appended to database.");
 
   return { user, token, refreshToken, isNewUser };
 };

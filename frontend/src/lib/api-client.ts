@@ -71,6 +71,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         if (newToken) {
           headers.set('Authorization', `Bearer ${newToken}`);
           res = await fetch(`${BACKEND_URL}${endpoint}`, {
+            credentials: 'include',
             ...options,
             headers,
           });

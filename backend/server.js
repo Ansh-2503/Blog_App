@@ -8,6 +8,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Trust reverse proxy (Render, Vercel, etc.)
+app.enable('trust proxy');
+
 // Apply security headers
 app.use(helmet());
 
