@@ -26,8 +26,11 @@ export function SocialAuthButtons({ isRegister }: SocialAuthButtonsProps) {
       const token = urlParams.get('token');
       const error = urlParams.get('error');
 
-      if (error) {
+      if (error === 'GoogleAuthFailed') {
         toast.error(`Google Authentication Failed: ${error}`);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (error) {
+        toast.error(`Authentication Error: ${error}`);
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (token) {
         // Clear token from URL to avoid leaking it
