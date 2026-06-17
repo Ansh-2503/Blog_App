@@ -1,5 +1,8 @@
 export function formatShortDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  if (!dateStr) return 'Unknown Date';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -7,7 +10,10 @@ export function formatShortDate(dateStr: string): string {
 }
 
 export function formatLongDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  if (!dateStr) return 'Unknown Date';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return date.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',

@@ -5,28 +5,45 @@ import { BlogDetailView } from '@/components/blog/blog-detail-view';
 import { getArticleBySlug, getArticleOrFallback } from '@/lib/articles';
 import { ARTICLES } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
+
 type Props = { params: Promise<{ slug: string }> };
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api').replace('localhost', '127.0.0.1');
+const BACKEND_URL = (
+  process.env.NEXT_PUBLIC_BACKEND_URL || 
+  process.env.BACKEND_URL || 
+  'http://localhost:5000/api'
+).replace('localhost', '127.0.0.1');
 
 // Server-side fetch helper
 async function fetchArticleFromServer(slug: string) {
+  console.log(`[Blog Detail SSR] Fetching article for slug "${slug}"`);
+  console.log(`[Blog Detail SSR] Using BACKEND_URL: "${BACKEND_URL}"`);
+  
   try {
-    const res = await fetch(`${BACKEND_URL}/posts/slug/${slug}`, {
-      next: { revalidate: 30 }, // Revalidate cache every 30 seconds
+    const targetUrl = `${BACKEND_URL}/posts/slug/${slug}`;
+    const res = await fetch(targetUrl, {
+      cache: 'no-store',
     });
+    
+    console.log(`[Blog Detail SSR] Backend responded with status: ${res.status}`);
     
     if (res.ok) {
       const data = await res.json();
       if (data.success) {
+        console.log(`[Blog Detail SSR] Successfully retrieved article: "${data.data.title}"`);
         return {
           ...data.data,
           htmlContent: data.htmlContent,
         };
+      } else {
+        console.warn(`[Blog Detail SSR] Backend returned success=false:`, data.message || 'Unknown error');
       }
+    } else {
+      console.warn(`[Blog Detail SSR] Fetch failed with status ${res.status}`);
     }
-  } catch (error) {
-    console.error(`Error fetching article [${slug}] from server:`, error);
+  } catch (error: any) {
+    console.error(`[Blog Detail SSR] Exception fetching article [${slug}] from server:`, error.message || error);
   }
   return null;
 }
