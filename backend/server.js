@@ -54,8 +54,17 @@ app.get('/api/health', (req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.statusCode || 500).json({
+  const statusCode = err.statusCode || 500;
+  
+  // Only log full stack traces for server errors (500+)
+  if (statusCode >= 500) {
+    console.error(err.stack);
+  } else {
+    // For client errors (like 404 Post Not Found), just log a concise warning
+    console.warn(`[${statusCode}] ${err.message} - ${req.method} ${req.originalUrl}`);
+  }
+
+  res.status(statusCode).json({
     success: false,
     message: err.message || 'Internal Server Error',
   });
