@@ -126,7 +126,8 @@ exports.googleCallback = async (req, res) => {
     }
   } catch (error) {
     console.error("Google Callback Error:", error);
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/?error=GoogleAuthFailed`);
+    const errorMessage = encodeURIComponent(error.message || 'Unknown Error');
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:3000"}/?error=GoogleAuthFailed&details=${errorMessage}`);
   }
 };
 

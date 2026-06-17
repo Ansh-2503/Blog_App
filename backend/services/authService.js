@@ -171,7 +171,8 @@ exports.processGoogleCallback = async ({ code, state }) => {
     } catch (e) {}
   }
 
-  const redirect_uri = `${process.env.BACKEND_URL || "http://localhost:5000"}/api/auth/google/callback`;
+  const baseUrl = (process.env.BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+  const redirect_uri = `${baseUrl}/api/auth/google/callback`;
   const { tokens } = await googleClient.getToken({ code, redirect_uri });
 
   const ticket = await googleClient.verifyIdToken({
