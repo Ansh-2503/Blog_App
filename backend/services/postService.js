@@ -49,9 +49,9 @@ const formatArticle = (post, user = null) => {
     coverImage: post.coverImage || 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=630&fit=crop&auto=format',
     category: catObj,
     author: formatAuthor(postAuthor),
-    publishedAt: post.createdAt.toISOString().split('T')[0],
-    updatedAt: post.updatedAt ? post.updatedAt.toISOString().split('T')[0] : undefined,
-    readTime: Math.max(1, Math.round((post.htmlContent || '').split(/\\s+/).filter(Boolean).length / 200)),
+    publishedAt: post.createdAt ? (typeof post.createdAt.toISOString === 'function' ? post.createdAt.toISOString().split('T')[0] : new Date(post.createdAt).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    updatedAt: post.updatedAt ? (typeof post.updatedAt.toISOString === 'function' ? post.updatedAt.toISOString().split('T')[0] : new Date(post.updatedAt).toISOString().split('T')[0]) : undefined,
+    readTime: Math.max(1, Math.round((post.htmlContent || '').split(/\s+/).filter(Boolean).length / 200)),
     views: post.views,
     likes: post.likes,
     status: post.status,
@@ -60,7 +60,7 @@ const formatArticle = (post, user = null) => {
 };
 
 const generateSlug = async (title) => {
-  let baseSlug = title.toLowerCase().replace(/[^a-z0-9\\s-]/g, '').trim().replace(/\\s+/g, '-');
+  let baseSlug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
   let slug = baseSlug;
   let count = 1;
 
