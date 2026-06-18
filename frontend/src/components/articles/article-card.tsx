@@ -136,8 +136,8 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
           </div>
         )}
       </div>
-      <div className="p-5">
-        <Badge variant="secondary" className="mb-2 text-xs">
+      <div className="p-5 flex flex-col flex-1">
+        <Badge variant="secondary" className="mb-2 self-start text-xs">
           {article.category.name}
         </Badge>
         <h3
@@ -150,7 +150,7 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
           {article.excerpt}
         </p>
         {variant === 'trending' ? (
-          <div className="space-y-2.5 border-t border-border pt-3">
+          <div className="space-y-2.5 border-t border-border pt-3 mt-auto">
             <div className="flex items-center justify-between text-xs gap-2 min-w-0">
               <div className="flex items-center gap-1.5 min-w-0 shrink">
                 <CoverImage
@@ -181,7 +181,7 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0 mt-auto">
             <div className="flex items-center gap-1.5 min-w-0 shrink">
               <CoverImage
                 src={getAvatarFallback(article.author.avatar)}
@@ -213,7 +213,7 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
   return (
     <Link
       href={href}
-      className="group block overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
+      className="group flex flex-col h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
     >
       {cardInner}
     </Link>

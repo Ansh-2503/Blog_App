@@ -30,7 +30,7 @@ export function ArticleListCard({ article, compact, priority = false }: ArticleL
           priority={priority}
         />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 flex flex-col">
         <div className="mb-2 flex items-center gap-2">
           <Badge variant="secondary" className="text-xs">
             {article.category.name}
@@ -57,7 +57,7 @@ export function ArticleListCard({ article, compact, priority = false }: ArticleL
             {article.excerpt}
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:gap-4 min-w-0">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:gap-4 min-w-0 mt-auto">
           <div className="flex items-center gap-1.5 min-w-0 shrink">
             <CoverImage
               src={getAvatarFallback(article.author.avatar)}
