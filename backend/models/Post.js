@@ -61,12 +61,11 @@ const postSchema = new mongoose.Schema(
   }
 );
 
-postSchema.pre('save', function (next) {
+postSchema.pre('save', function () {
   if (this.htmlContent) {
     const wordCount = this.htmlContent.split(/\s+/).filter(Boolean).length;
     this.readTime = Math.max(1, Math.round(wordCount / 200));
   }
-  next();
 });
 
 module.exports = mongoose.model('Post', postSchema);
