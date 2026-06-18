@@ -52,27 +52,27 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
               >
                 {article.title}
               </h2>
-              <div className="flex items-center gap-4 text-xs text-white/70">
-                <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-4 text-xs text-white/70 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 shrink">
                   <CoverImage
                     src={getAvatarFallback(article.author.avatar)}
                     alt={article.author.name}
                     width={20}
                     height={20}
-                    className="h-5 w-5 rounded-full object-cover"
+                    className="h-5 w-5 rounded-full object-cover shrink-0"
                   />
-                  <span>{article.author.name}</span>
+                  <span className="truncate" title={article.author.name}>{article.author.name}</span>
                 </div>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                <span className="flex items-center gap-1 shrink-0">
+                  <Clock className="h-3 w-3 shrink-0" />
                   {article.readTime} min
                 </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
+                <span className="flex items-center gap-1 shrink-0">
+                  <Calendar className="h-3 w-3 shrink-0" />
                   {formatShortDate(article.publishedAt)}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
+                <span className="flex items-center gap-1 shrink-0">
+                  <Eye className="h-3 w-3 shrink-0" />
                   {formatViews(article.views)}
                 </span>
               </div>
@@ -96,10 +96,10 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
           <h4 className="line-clamp-2 text-sm font-medium leading-snug text-foreground transition-colors group-hover:text-primary">
             {article.title}
           </h4>
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{article.author.name}</span>
-            <span className="flex items-center gap-0.5">
-              <Clock className="h-3 w-3" />
+          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+            <span className="truncate" title={article.author.name}>{article.author.name}</span>
+            <span className="flex items-center gap-0.5 shrink-0">
+              <Clock className="h-3 w-3 shrink-0" />
               {article.readTime}m
             </span>
           </div>
@@ -151,21 +151,21 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
         </p>
         {variant === 'trending' ? (
           <div className="space-y-2.5 border-t border-border pt-3">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between text-xs gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 shrink">
                 <CoverImage
                   src={getAvatarFallback(article.author.avatar)}
                   alt={article.author.name}
                   width={20}
                   height={20}
-                  className="h-5 w-5 rounded-full object-cover"
+                  className="h-5 w-5 rounded-full object-cover shrink-0"
                 />
-                <span className="font-medium text-foreground">
+                <span className="font-medium text-foreground truncate" title={article.author.name}>
                   {article.author.name}
                 </span>
               </div>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className="h-3 w-3" />
+              <span className="flex items-center gap-1 text-muted-foreground shrink-0">
+                <Calendar className="h-3 w-3 shrink-0" />
                 {formatShortDate(article.publishedAt)}
               </span>
             </div>
@@ -181,27 +181,27 @@ export function ArticleCard({ article, variant = 'default', priority = false }: 
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0 shrink">
               <CoverImage
                 src={getAvatarFallback(article.author.avatar)}
                 alt={article.author.name}
                 width={18}
                 height={18}
-                className="h-4.5 w-4.5 rounded-full object-cover"
+                className="h-4.5 w-4.5 rounded-full object-cover shrink-0"
               />
-              <span>{article.author.name}</span>
+              <span className="truncate" title={article.author.name}>{article.author.name}</span>
             </div>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+            <span className="flex items-center gap-1 shrink-0">
+              <Clock className="h-3 w-3 shrink-0" />
               {article.readTime} min
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+            <span className="flex items-center gap-1 shrink-0">
+              <Calendar className="h-3 w-3 shrink-0" />
               {formatShortDate(article.publishedAt)}
             </span>
-            <span className="ml-auto flex items-center gap-1">
-              <Eye className="h-3 w-3" />
+            <span className="ml-auto flex items-center gap-1 shrink-0">
+              <Eye className="h-3 w-3 shrink-0" />
               {formatViews(article.views)}
             </span>
           </div>

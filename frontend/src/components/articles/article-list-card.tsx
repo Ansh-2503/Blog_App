@@ -57,27 +57,27 @@ export function ArticleListCard({ article, compact, priority = false }: ArticleL
             {article.excerpt}
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:gap-4">
-          <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:gap-4 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 shrink">
             <CoverImage
               src={getAvatarFallback(article.author.avatar)}
               alt={article.author.name}
               width={16}
               height={16}
-              className="h-4 w-4 rounded-full"
+              className="h-4 w-4 rounded-full shrink-0"
             />
-            <span>{article.author.name}</span>
+            <span className="truncate" title={article.author.name}>{article.author.name}</span>
           </div>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+          <span className="flex items-center gap-1 shrink-0">
+            <Clock className="h-3 w-3 shrink-0" />
             {article.readTime} min read
           </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
+          <span className="flex items-center gap-1 shrink-0">
+            <Calendar className="h-3 w-3 shrink-0" />
             {formatShortDate(article.publishedAt)}
           </span>
-          <span className="flex items-center gap-1">
-            <Eye className="h-3 w-3" />
+          <span className="flex items-center gap-1 shrink-0">
+            <Eye className="h-3 w-3 shrink-0" />
             {formatViews(article.views)} views
           </span>
         </div>
