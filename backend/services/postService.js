@@ -56,6 +56,7 @@ const formatArticle = (post, user = null) => {
     likes: post.likes,
     status: post.status,
     tags: post.seoKeywords ? post.seoKeywords.split(',').map(s => s.trim()).filter(Boolean) : [],
+    seoKeywords: post.seoKeywords || '',
   };
 };
 

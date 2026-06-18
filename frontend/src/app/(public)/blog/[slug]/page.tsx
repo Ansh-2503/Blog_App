@@ -77,10 +77,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? [...baseKeywords, 'engineering blog', 'DevPulse', 'tech'] 
       : ['blog', 'engineering blog', 'software engineering', 'tech blog', 'deep technical writing', 'DevPulse'];
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://devpulse.io';
+  const canonicalUrl = `${siteUrl}/blog/${slug}`;
+  const title = `${article.title} | DevPulse`;
+  const description = article.excerpt;
+  const imageUrl = article.coverImage || 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=630&fit=crop&auto=format';
+
   return {
-    title: `${article.title} | DevPulse`,
-    description: article.excerpt,
+    title,
+    description,
     keywords,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'DevPulse',
+      type: 'article',
+      publishedTime: article.publishedAt,
+      authors: [article.author.name],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
   };
 }
 
