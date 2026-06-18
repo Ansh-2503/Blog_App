@@ -51,7 +51,7 @@ const formatArticle = (post, user = null) => {
     author: formatAuthor(postAuthor),
     publishedAt: post.createdAt ? (typeof post.createdAt.toISOString === 'function' ? post.createdAt.toISOString().split('T')[0] : new Date(post.createdAt).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     updatedAt: post.updatedAt ? (typeof post.updatedAt.toISOString === 'function' ? post.updatedAt.toISOString().split('T')[0] : new Date(post.updatedAt).toISOString().split('T')[0]) : undefined,
-    readTime: Math.max(1, Math.round((post.htmlContent || '').split(/\s+/).filter(Boolean).length / 200)),
+    readTime: post.readTime || Math.max(1, Math.round((post.htmlContent || '').split(/\s+/).filter(Boolean).length / 200)),
     views: post.views,
     likes: post.likes,
     status: post.status,
@@ -286,3 +286,27 @@ exports.recordView = async ({ postId, userId }) => {
     throw error;
   }
 };
+
+// Run a one-time migration for legacy posts that don't have readTime
+const migrateExistingPosts = async () => {
+  try {
+    const postsToMigrate = await Post.find({ readTime: { $exists: false } });
+    if (postsToMigrate.length > 0) {
+      console.info(`[Migration] Found ${postsToMigrate.length} posts without readTime. Calculating...`);
+      for (const post of postsToMigrate) {
+        if (post.htmlContent) {
+          const wordCount = post.htmlContent.split(/\s+/).filter(Boolean).length;
+          post.readTime = Math.max(1, Math.round(wordCount / 200));
+        } else {
+          post.readTime = 1;
+        }
+        await post.save();
+      }
+      console.info(`[Migration] Completed readTime calculation for existing posts.`);
+    }
+  } catch (error) {
+    console.error(`[Migration Error] Failed to migrate existing posts:`, error);
+  }
+};
+// Trigger migration in the background
+setTimeout(migrateExistingPosts, 1000);

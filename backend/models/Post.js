@@ -51,10 +51,22 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    readTime: {
+      type: Number,
+      default: 1,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+postSchema.pre('save', function (next) {
+  if (this.htmlContent) {
+    const wordCount = this.htmlContent.split(/\s+/).filter(Boolean).length;
+    this.readTime = Math.max(1, Math.round(wordCount / 200));
+  }
+  next();
+});
 
 module.exports = mongoose.model('Post', postSchema);
