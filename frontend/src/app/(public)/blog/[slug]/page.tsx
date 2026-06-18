@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { BlogDetailView } from '@/components/blog/blog-detail-view';
-import { getArticleBySlug, getArticleOrFallback } from '@/lib/articles';
-import { ARTICLES } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,8 +47,18 @@ async function fetchArticleFromServer(slug: string) {
 }
 
 export async function generateStaticParams() {
-  // Prerender known paths for faster initial delivery
-  return ARTICLES.map((article) => ({ slug: article.slug }));
+  try {
+    const res = await fetch(`${BACKEND_URL}/posts?status=published`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.data) {
+        return data.data.map((article: any) => ({ slug: article.slug }));
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching static params:', error);
+  }
+  return [];
 }
 
 /**
@@ -58,15 +66,18 @@ export async function generateStaticParams() {
  * 
  * Next.js fetches the article details during Server-Side Rendering (SSR) 
  * to dynamically inject <meta> tags, title, and keywords.
- * If backend fetching fails, it falls back to mock data to ensure SEO stability.
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   
-  // Try to load from server first, fallback to mock data
-  const article = await fetchArticleFromServer(slug) || 
-                  getArticleBySlug(slug) || 
-                  getArticleOrFallback(slug);
+  // Try to load from server first
+  const article = await fetchArticleFromServer(slug);
+  if (!article) {
+    return {
+      title: 'Article Not Found | DevPulse',
+      description: 'The requested article could not be found.',
+    };
+  }
                   
   const parsedSeoKeywords = article.seoKeywords ? article.seoKeywords.split(',').map((k: string) => k.trim()) : [];
   const baseKeywords = parsedSeoKeywords.length > 0 
@@ -122,15 +133,10 @@ export default async function BlogDetailPage({ params }: Props) {
   // Fetch dynamic article from the backend
   let article = await fetchArticleFromServer(slug);
   
-  // Fallback to mock data if backend doesn't have it
-  if (!article) {
-    article = getArticleBySlug(slug) || null;
-  }
-  
   if (!article) {
     // If not found in mock data either, throw 404
     notFound();
   }
-
+  
   return <BlogDetailView article={article} />;
 }

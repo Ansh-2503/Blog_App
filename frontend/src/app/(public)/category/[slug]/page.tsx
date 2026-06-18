@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CoverImage } from '@/components/shared/cover-image';
 import {
-  getArticlesByCategorySlug,
   getCategoryBySlug,
 } from '@/lib/articles';
 import { CATEGORIES } from '@/lib/data';
@@ -84,7 +83,7 @@ export default async function CategoryDetailPage({ params }: Props) {
   const category = allCategories.find((c: any) => c.slug === slug) ?? allCategories[0];
   
   const serverArticles = await fetchArticlesByCategoryFromServer(category.slug);
-  const articles = serverArticles || getArticlesByCategorySlug(category.slug);
+  const articles = serverArticles || [];
   
   const otherCategories = allCategories.filter((c: any) => c.slug !== category.slug);
   const totalViewsK =

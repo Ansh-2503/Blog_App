@@ -5,7 +5,7 @@ import { ArrowRight, TrendingUp } from 'lucide-react';
 import { ArticleCard } from '@/components/articles/article-card';
 import { NewsletterSection } from '@/components/home/newsletter-section';
 import { Button } from '@/components/ui/button';
-import { ARTICLES, CATEGORIES } from '@/lib/data';
+import { CATEGORIES } from '@/lib/data';
 import { ROUTES } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -57,9 +57,8 @@ export default async function HomePage() {
   const liveLatest = await fetchHomePosts('sort=latest');
   const liveCategories = await fetchCategories();
 
-  // Fallback to mock data if backend query returns null/fails
-  const trendingArticles = liveTrending ? liveTrending.slice(0, 4) : ARTICLES.filter((a) => a.trending).slice(0, 4);
-  const latestArticles = liveLatest ? liveLatest.slice(0, 6) : ARTICLES.filter((a) => a.status === 'published').slice(0, 6);
+  const trendingArticles = liveTrending ? liveTrending.slice(0, 4) : [];
+  const latestArticles = liveLatest ? liveLatest.slice(0, 6) : [];
   const categories = liveCategories || CATEGORIES;
 
   return (
@@ -76,11 +75,17 @@ export default async function HomePage() {
             </Link>
           </Button>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {trendingArticles.map((article: any, i: number) => (
-            <ArticleCard key={article.id} article={article} variant="trending" priority={i === 0} />
-          ))}
-        </div>
+        {trendingArticles.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {trendingArticles.map((article: any, i: number) => (
+              <ArticleCard key={article.id} article={article} variant="trending" priority={i === 0} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border py-8 text-center text-muted-foreground text-sm">
+            No trending articles found at the moment.
+          </div>
+        )}
       </section>
 
       <section className="mx-auto max-w-7xl border-t border-border px-4 py-10 sm:px-6 lg:px-8">
@@ -112,11 +117,17 @@ export default async function HomePage() {
             </Link>
           </Button>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {latestArticles.map((article: any, i: number) => (
-            <ArticleCard key={article.id} article={article} priority={i === 0 && trendingArticles.length === 0} />
-          ))}
-        </div>
+        {latestArticles.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {latestArticles.map((article: any, i: number) => (
+              <ArticleCard key={article.id} article={article} priority={i === 0 && trendingArticles.length === 0} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border py-12 text-center text-muted-foreground text-sm">
+            No articles have been published yet. Check back soon!
+          </div>
+        )}
       </section>
 
       <NewsletterSection />

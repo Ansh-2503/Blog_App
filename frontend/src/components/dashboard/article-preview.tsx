@@ -10,6 +10,7 @@ import { CoverImage } from '@/components/shared/cover-image';
 import { ROUTES } from '@/lib/constants';
 import type { Article } from '@/types';
 import { getAvatarFallback } from '@/lib/utils';
+import { ArticleBody } from '@/components/blog/article-body';
 
 const sampleCode = `const UserRegistrationSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -125,41 +126,7 @@ export function ArticlePreview({ article }: ArticlePreviewProps) {
         </div>
 
         <div className="space-y-5 text-[15px] leading-relaxed text-muted-foreground">
-          <h2 className="text-xl font-semibold text-foreground">Introduction</h2>
-          <p>
-            Type safety is one of the most powerful tools in a software
-            engineer&apos;s arsenal. When building APIs, the challenge isn&apos;t
-            just defining your types in TypeScript — it&apos;s ensuring those types
-            hold at runtime, where untrusted data enters your system.
-          </p>
-          <p>
-            This is where <strong className="text-foreground">Zod</strong> comes
-            in. Zod is a TypeScript-first schema validation library that lets you
-            define schemas and infer their types simultaneously.
-          </p>
-
-          <h2 className="text-xl font-semibold text-foreground">
-            Defining Schemas with Zod
-          </h2>
-          <p>With Zod, you define a schema once and get both runtime validation and TypeScript types:</p>
-
-          <div className="overflow-hidden rounded-xl border border-border">
-            <div className="flex items-center justify-between border-b border-border bg-foreground/5 px-4 py-2">
-              <span className="font-mono text-xs text-muted-foreground">
-                typescript
-              </span>
-            </div>
-            <pre className="overflow-x-auto bg-foreground/3 p-5 text-sm leading-relaxed">
-              <code className="font-mono text-foreground">{sampleCode}</code>
-            </pre>
-          </div>
-
-          <h2 className="text-xl font-semibold text-foreground">Conclusion</h2>
-          <p>
-            By combining TypeScript&apos;s static type checking with Zod&apos;s
-            runtime validation, you eliminate an entire class of bugs at the API
-            boundary and ship more reliable software.
-          </p>
+          <ArticleBody content={(article as any).content || (article as any).htmlContent} />
         </div>
       </div>
     </div>

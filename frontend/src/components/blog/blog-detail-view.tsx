@@ -16,7 +16,7 @@ import { ArticleBody } from '@/components/blog/article-body';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CoverImage } from '@/components/shared/cover-image';
-import { getRelatedArticles } from '@/lib/articles';
+
 import { ROUTES } from '@/lib/constants';
 import { formatFollowers, formatLongDate, formatShortDate, formatViews } from '@/lib/format';
 import type { Article } from '@/types';
@@ -45,7 +45,7 @@ const PdfDownloadButton = dynamic(
 );
 
 export function BlogDetailView({ article }: BlogDetailViewProps) {
-  const relatedArticles = getRelatedArticles(article);
+
   const [isClient, setIsClient] = useState(false);
   const [viewCount, setViewCount] = useState(article.views);
   const { user } = useAuthStore();
